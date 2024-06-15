@@ -1,10 +1,71 @@
 # Project resume-backend-parser
 
-One Paragraph of project description goes here
+Assignment about backend server for a Recruitment Management System. 
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+About the APIs:
+APIs:
+ POST /signup: Create a profile on the system (Name, Email, Password, UserType
+(Admin/Applicant), Profile Headline, Address).
+ POST /login: Authenticate users and return a JWT token upon successful validation.
+ POST /uploadResume: Authenticated API for uploading resume files (only PDF or DOCX) of
+the applicant. Only Applicant type users can access this API.
+ POST /admin/job: Authenticated API for creating job openings. Only Admin type users can
+access this API.
+ GET /admin/job/{job_id}: Authenticated API for fetching information regarding a job
+opening. Returns details about the job opening and a list of applicants. Only Admin type
+users can access this API.
+ GET /admin/applicants: Authenticated API for fetching a list of all users in the system. Only
+Admin type users can access this API.
+ GET /admin/applicant/{applicant_id}: Authenticated API for fetching extracted data of an
+applicant. Only Admin type users can access this API.
+ GET /jobs: Authenticated API for fetching job openings. All users can access this API.
+ GET /jobs/apply?job_id={job_id}: Authenticated API for applying to a particular job. Only
+Applicant users are allowed to apply for jobs
+
+## Run in dev mode:
+
+1. create keys for JWT
+```bash
+cd keys
+openssl genrsa -out app.rsa 2048
+openssl rsa -in app.rsa -pubout > app.rsa.pub
+```
+
+2. Setup the database
+```bash
+psql -U postgres -h localhost 
+
+ \ "CREATE DATABASE resume_backend_parser"
+....create user passwword grant all privilages....etc.
+```
+
+3. Make the env file:
+```bash
+touch .env
+vim .env 
+#secrets:
+PORT=8080
+APP_ENV=local
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=resume_backend_parser
+DB_USERNAME=parser
+DB_PASSWORD=
+DB_SCHEMA=public
+```
+
+3. Make directories for uploads
+```bash
+mkdir resumes
+```
+
+2. run the application
+```bash
+air
+```
 
 ## MakeFile
 

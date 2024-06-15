@@ -1,0 +1,33 @@
+user:
+{
+    "name": "John Doe",
+    "email": "example@gmail.com",
+    "address": "1234 Main St, City, State, 12345",
+    "password": "password",
+    "profileHeadline": "Software Engineer",
+}
+
+    profile:
+{
+    "applicant": "John Doe",
+    "resumeFileAddress": "media/resume.pdf",
+    "skills": "Java, Python, C++",
+    "education": "Bachelors in Computer Science",
+    "experience": "2 years",
+    "name": "John Doe",
+    "email": "example@gmail.com"
+    "phone": "123-456-7890"
+}
+
+job:
+{
+    "title": "Software Engineer",
+    "description": "Develop software applications",
+    "postedOn": "2021-03-01T00:00:00Z",
+    "totalApplications": 10,
+    "numApplications": 5,
+    "companyName": "Google",
+    "postedBy": "John Doe"
+}
+
+

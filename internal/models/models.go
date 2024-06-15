@@ -106,3 +106,20 @@ type ApplicantResponse struct {
     Applicant Profile `json:"applicant"`
 }
 
+
+type ProfileThirdParty struct {
+    Name       string     `json:"name"`
+    Email      string     `json:"email"`
+    Phone      string     `json:"phone"`
+    Education  []Institute `json:"education"`
+    Experience []Experience `json:"experience"`
+    Skills     []string   `json:"skills"`
+}
+
+type Institute struct {
+    Name string `json:"name"`
+}
+
+type Experience struct {
+    Role string `json:"role"`
+}

@@ -38,6 +38,70 @@ func (s *Server) RegisterRoutes() http.Handler {
 	return e
 }
 
+func readFileAsBytes(filename string) ([]byte, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    data, err := io.ReadAll(file)
+    if err != nil {
+        return nil, err
+    }
+    return data, nil
+}
+
+func UploadResumeToThirdParty(userId int, resumePath string, s *Server) {
+    data, err := readFileAsBytes(resumePath)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    var url = "https://api.apilayer.com/resume_parser/upload"
+    var api_key = os.Getenv("API_KEY")
+    req, err := http.NewRequest("POST", url, bytes.NewReader(data))
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+	req.Header.Set("Content-Type", "applicaiton/octet-stream")
+    req.Header.Set("apikey", api_key)
+    client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+        fmt.Println(err)
+	}
+	defer resp.Body.Close()
+
+    body, err := io.ReadAll(resp.Body)
+	if err != nil {
+        fmt.Println(err)
+	}
+
+	var respData map[string]interface{}
+
+	err = json.Unmarshal(body, &respData)
+	if err != nil {
+        fmt.Println(err)
+	}
+    var profile models.ProfileThirdParty
+    err = json.Unmarshal(body, &profile)
+    if err != nil {
+        fmt.Println(err)
+    }
+    fmt.Println(profile)
+
+    err = s.db.UpdateProfileWithFields(userId, profile)
+    if err != nil {
+        fmt.Println(err)
+    }
+}
+
+
 func (s *Server) HelloWorldHandler(c echo.Context) error {
 	resp := map[string]string{
 		"message": "Hello World",
@@ -155,9 +219,8 @@ func (s *Server) UploadResumeHandler(c echo.Context) error {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
     }
 
-    file, handler, err := c.Request().FormFile("file")
+    file, handler, err := c.Request().FormFile("resume")
     if err != nil {
-        fmt.Println("Error Retrieving the File")
         fmt.Println(err)
         return c.JSON(http.StatusBadRequest, map[string]string{"error": "Error retrieving the resume."})
     }
@@ -200,9 +263,13 @@ func (s *Server) UploadResumeHandler(c echo.Context) error {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
     }
 
-    //Create profile
-    err = s.db.CreateProfile(id, handler.Filename)
+    err = s.db.UpdateProfile(id, handler.Filename)
+    if err != nil {
+        fmt.Println(err)
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Internal server error"})
+    }
 
+    UploadResumeToThirdParty(id, destination_folder + handler.Filename, s)
 
     return c.JSON(http.StatusOK, map[string]string{"message": "Resume uploaded successfully"})
 }
@@ -239,7 +306,6 @@ func (s *Server) CreateJobOpeningHandler(c echo.Context) error {
     var apiReq models.CreateJobRequest
     err = json.NewDecoder(c.Request().Body).Decode(&apiReq)
     if err != nil {
-        fmt.Println(apiReq)
         fmt.Println(err)
         return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
     }
@@ -278,7 +344,6 @@ func (s *Server) AdminGetJobOpeningHandler(c echo.Context) error {
     }
 
     job_id := c.Param("job_id")
-    fmt.Println(job_id)
     if job_id == "" {
         return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
     }
@@ -299,7 +364,6 @@ func (s *Server) AdminGetJobOpeningHandler(c echo.Context) error {
         fmt.Println(err)
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
     }
-    fmt.Println(apiResp)
     return c.JSON(http.StatusOK, apiResp)
 }
 
@@ -356,7 +420,6 @@ func (s *Server) AdminGetApplicantHandler(c echo.Context) error {
     if applicant_id == "" {
         return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
     }
-    fmt.Println(applicant_id)
     applicantId, err := strconv.Atoi(applicant_id)
     if err != nil {
         fmt.Println(err)

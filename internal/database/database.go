@@ -25,7 +25,8 @@ type Service interface {
     CheckUserLogin(email string, password string) (bool, error)
     IsUserAdmin(email string) (bool, error)
     GetUserId(email string) (int, error)
-    CreateProfile(userId int, resumeFileAddress string) error
+    UpdateProfile(userId int, resumeFileAddress string) error
+    UpdateProfileWithFields(userId int, profile models.ProfileThirdParty) error
 
     CreateJob(title string, description string, companyName string, TotalApplications int, userId int) error
     GetJob(id int) (models.Job, error)
@@ -305,10 +306,22 @@ func (s *service) GetAllApplicants() ([]models.Profile, error) {
     return profiles, nil
 }
 
-func (s *service) CreateProfile(userId int, resumeFileAddress string) error {
-    query := "INSERT INTO profiles (applicant, resume_file_address) VALUES ($1, $2)"
-    _, err := s.db.Exec(query, userId, resumeFileAddress)
+func (s *service) UpdateProfile(userId int, resumeFileAddress string) error {
+    query := "SELECT applicant FROM profile WHERE applicant = $1"
+    row := s.db.QueryRow(query, userId)
+    var id int
+    err := row.Scan(&id)
+    if errors.Is(err, sql.ErrNoRows) {
+        query = "INSERT INTO profile (applicant, resume_file_address) VALUES ($1, $2)"
+        _, err = s.db.Exec(query, userId, resumeFileAddress)
+        return err
+    } else if err != nil {
+        return err
+    }
+    query = "UPDATE profile set resume_file_address = $1 WHERE applicant = $2"
+    _, err = s.db.Exec(query, resumeFileAddress, userId)
     return err
+
 }
 
 func (s *service) ApplyJob(jobId int, userId int) error {
@@ -326,5 +339,18 @@ func (s *service) ApplyJob(jobId int, userId int) error {
     if err != nil {
         return err
     }
+    return err
+}
+func (s *service) UpdateProfileWithFields(userId int, profile models.ProfileThirdParty) error {
+    fmt.Println("update profile with fields", userId)
+    query := "SELECT applicant FROM profile WHERE applicant = $1"
+    row := s.db.QueryRow(query, userId)
+    var id int
+    err := row.Scan(&id)
+    if err != nil {
+        return err
+    }
+    query = "UPDATE profile set name, email, phone, education, experience, skills = $1, $2, $3, $4, $5, $6 WHERE applicant = $7"
+    _, err = s.db.Exec(query, profile.Name, profile.Email, profile.Phone, profile.Education, profile.Experience, pq.Array(profile.Skills), userId)
     return err
 }

@@ -5,7 +5,6 @@ Assignment about backend server for a Recruitment Management System.
 ## Getting Started
 
 About the APIs:
-APIs:
 
 1.POST /signup: Create a profile on the system (Name, Email, Password, UserType
 (Admin/Applicant), Profile Headline, Address).
